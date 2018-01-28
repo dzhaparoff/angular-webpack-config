@@ -27,7 +27,7 @@ npm install angular-webpack-config --save
 ## <a name="usage"></a> Usage
 To use this [Webpack] **configuration preset**, you should first have a **`build-config.json`** file, with the following structure:
 
-```json
+```json5
 {
   "host": "localhost", // hostname of your app
   "port": {
