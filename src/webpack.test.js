@@ -2,7 +2,6 @@
  * Webpack helpers & dependencies
  */
 const definePlugin = require('webpack/lib/DefinePlugin'),
-  contextReplacementPlugin = require('webpack/lib/ContextReplacementPlugin'),
   loaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 
 const ENV = process.env.ENV = process.env.NODE_ENV = 'test';
@@ -95,17 +94,6 @@ module.exports = function(root, settings) {
         },
 
         /**
-         * json-loader for *.json
-         *
-         * See: https://github.com/webpack/json-loader
-         */
-        {
-          test: /\.json$/,
-          use: 'json-loader',
-          exclude: [root(`${settings.paths.src.client.root}/index.html`)]
-        },
-
-        /**
          * to-string-loader, css-loader and sass-loader for *.scss
          *
          * See: https://github.com/gajus/to-string-loader
@@ -170,19 +158,6 @@ module.exports = function(root, settings) {
           'NODE_ENV': JSON.stringify(ENV)
         }
       }),
-
-      /**
-       * Plugin: ContextReplacementPlugin
-       * Description: Provides context to Angular's use of System.import
-       *
-       * See: https://webpack.github.io/docs/list-of-plugins.html#contextreplacementplugin
-       * See: https://github.com/angular/angular/issues/11580
-       */
-      new contextReplacementPlugin(
-        // fix the warning in ./~/@angular/core/src/linker/system_js_ng_module_factory_loader.js
-        /angular([\\\/])core([\\\/])@angular/,
-        root(settings.paths.src.root)
-      ),
 
       /**
        * Plugin LoaderOptionsPlugin (experimental)

@@ -2,19 +2,17 @@
  * Webpack helpers & dependencies
  */
 const commonConfig = require('./webpack.common'),
-  webpackMerge = require('webpack-merge'),
-  webpackMergeDll = webpackMerge.strategy({plugins: 'replace'});
+  webpackMerge = require('webpack-merge');
 
 const hardSourceWebpackPlugin = require('hard-source-webpack-plugin'),
-  dllBundlesPlugin = require('webpack-dll-bundles-plugin').DllBundlesPlugin,
-  commonsChunkPlugin = require('webpack/lib/optimize/CommonsChunkPlugin'),
-  addAssetHtmlPlugin = require('add-asset-html-webpack-plugin'),
   loaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 
 const ENV = process.env.ENV = process.env.NODE_ENV = 'development';
 
 const defaultConfig = function(settings) {
   return {
+    mode: 'development',
+
     /**
      * Developer tool to enhance debugging
      *
@@ -30,6 +28,14 @@ const defaultConfig = function(settings) {
      */
     plugins: [
       /**
+       * Plugin: HardSourceWebpackPlugin
+       * Description: Provides intermediate caching step for modules
+       *
+       * See: https://github.com/mzgoddard/hard-source-webpack-plugin
+       */
+      new hardSourceWebpackPlugin(),
+
+      /**
        * Plugin LoaderOptionsPlugin (experimental)
        *
        * See: https://gist.github.com/sokra/27b24881210b56bbaff7
@@ -41,15 +47,7 @@ const defaultConfig = function(settings) {
   };
 };
 
-const browserConfig = function(root, settings) {
-  const pkg = require(root('package.json'));
-  const ignore = list => key => !list.includes(key);
-
-  const exclusions = [
-    ...new Set(settings.webpack.bundles.polyfills.map(cur => cur.name || cur)),
-    ...new Set(settings.webpack.bundles.server)
-  ];
-
+const browserConfig = function(root) {
   return {
     /**
      * Options affecting the output of the compilation.
@@ -85,74 +83,29 @@ const browserConfig = function(root, settings) {
     },
 
     /**
+     * Options affecting the development experience versus performance of the compilation
+     *
+     * See: https://webpack.js.org/plugins/split-chunks-plugin/#optimization-splitchunks
+     */
+    optimization: {
+      splitChunks: {
+        cacheGroups: {
+          vendor: {
+            chunks: 'all',
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendor',
+            enforce: true
+          }
+        }
+      }
+    },
+
+    /**
      * Add additional plugins to the compiler.
      *
      * See: http://webpack.github.io/docs/configuration.html#plugins
      */
     plugins: [
-      /**
-       * Plugin: DLLBundlesPlugin
-       * Description: Bundles group of packages as DLLs
-       *
-       * See: https://github.com/shlomiassaf/webpack-dll-bundles-plugin
-       */
-      new dllBundlesPlugin({
-        bundles: {
-          polyfills: settings.webpack.bundles.polyfills,
-          vendor: Object.keys(pkg.dependencies).filter(ignore(exclusions))
-        },
-        dllDir: root(`node_modules/.cache/dll`),
-        webpackConfig: webpackMergeDll(commonConfig({env: ENV}, root, settings),
-          {
-            devtool: settings.webpack.devtool.DEV,
-            plugins: []
-          })
-      }),
-
-      /**
-       * Plugin: HardSourceWebpackPlugin
-       * Description: Provides intermediate caching step for modules
-       *
-       * See: https://github.com/mzgoddard/hard-source-webpack-plugin
-       */
-      new hardSourceWebpackPlugin(),
-
-      /**
-       * Plugin: CommonsChunkPlugin
-       * Description: Shares common code between the pages.
-       * It identifies common modules and put them into a commons chunk.
-       *
-       * See: https://webpack.github.io/docs/list-of-plugins.html#commonschunkplugin
-       * See: https://github.com/webpack/docs/wiki/optimization#multi-page-app
-       */
-      new commonsChunkPlugin({
-        name: 'polyfills',
-        chunks: ['polyfills']
-      }),
-      // This enables tree shaking of the vendor modules
-      new commonsChunkPlugin({
-        name: 'vendor',
-        chunks: ['app'],
-        minChunks: module => /node_modules/.test(module.resource)
-      }),
-      // Specify the correct order the scripts will be injected in
-      new commonsChunkPlugin({
-        name: ['polyfills', 'vendor'].reverse()
-      }),
-
-      /**
-       * Plugin: AddAssetHtmlPlugin
-       * Description: Adds the given JS or CSS file to the files
-       * Webpack knows about, and put it into the list of assets
-       * html-webpack-plugin injects into the generated html.
-       *
-       * See: https://github.com/SimenB/add-asset-html-webpack-plugin
-       */
-      new addAssetHtmlPlugin([
-        {filepath: root(`node_modules/.cache/dll/${dllBundlesPlugin.resolveFile('polyfills')}`)},
-        {filepath: root(`node_modules/.cache/dll/${dllBundlesPlugin.resolveFile('vendor')}`)}
-      ]),
-
       /**
        * Plugin LoaderOptionsPlugin (experimental)
        *

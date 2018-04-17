@@ -4,17 +4,16 @@
 const commonConfig = require('./webpack.common'),
   webpackMerge = require('webpack-merge');
 
-const noEmitOnErrorsPlugin = require('webpack/lib/NoEmitOnErrorsPlugin'),
-  optimizeJsPlugin = require('optimize-js-plugin'),
-  commonsChunkPlugin = require('webpack/lib/optimize/CommonsChunkPlugin'),
-  // uglifyJsPlugin = require('uglifyjs-webpack-plugin'),
-  normalModuleReplacementPlugin = require('webpack/lib/NormalModuleReplacementPlugin'),
-  loaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
+const optimizeJsPlugin = require('optimize-js-plugin'),
+  loaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin'),
+  uglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const ENV = process.env.ENV = process.env.NODE_ENV = 'production';
 
-const defaultConfig = function() {
+const defaultConfig = function(settings) {
   return {
+    mode: 'production',
+
     /**
      * Developer tool to enhance debugging
      *
@@ -24,20 +23,22 @@ const defaultConfig = function() {
     // devtool: settings.webpack.devtool.PROD,
 
     /**
+     * Options affecting the development experience versus performance of the compilation
+     *
+     * See: https://webpack.js.org/plugins/no-emit-on-errors-plugin/
+     * See: https://webpack.js.org/plugins/uglifyjs-webpack-plugin/
+     */
+    optimization: {
+      noEmitOnErrors: !!settings.minimize,
+      minimize: !!settings.minimize
+    },
+
+    /**
      * Add additional plugins to the compiler.
      *
      * See: http://webpack.github.io/docs/configuration.html#plugins
      */
     plugins: [
-      /**
-       * Plugin: NoEmitOnErrorsPlugin
-       * Description: Skips the emitting phase (and recording phase) when
-       * there are errors while compiling.
-       *
-       * See: https://github.com/webpack/docs/wiki/list-of-plugins#noerrorsplugin
-       */
-      new noEmitOnErrorsPlugin(),
-
       /**
        * Webpack plugin to optimize a JavaScript file for faster initial load
        * by wrapping eagerly-invoked functions.
@@ -61,7 +62,7 @@ const defaultConfig = function() {
   };
 };
 
-const browserConfig = function(root) {
+const browserConfig = function(settings) {
   return {
     /**
      * Options affecting the output of the compilation.
@@ -95,58 +96,29 @@ const browserConfig = function(root) {
     },
 
     /**
+     * Options affecting the development experience versus performance of the compilation
+     *
+     * See: https://webpack.js.org/plugins/no-emit-on-errors-plugin/
+     * See: https://webpack.js.org/plugins/uglifyjs-webpack-plugin/
+     */
+    optimization: {
+      minimizer: !!settings.minimize
+        ? [
+          new uglifyJsPlugin({
+            uglifyOptions: {
+              ecma: 6
+            }
+          })
+        ]
+        : undefined
+    },
+
+    /**
      * Add additional plugins to the compiler.
      *
      * See: http://webpack.github.io/docs/configuration.html#plugins
      */
     plugins: [
-      /**
-       * Plugin: CommonsChunkPlugin
-       * Description: Shares common code between the pages.
-       * It identifies common modules and put them into a commons chunk.
-       *
-       * See: https://webpack.github.io/docs/list-of-plugins.html#commonschunkplugin
-       * See: https://github.com/webpack/docs/wiki/optimization#multi-page-app
-       */
-      new commonsChunkPlugin({
-        name: ['app', 'polyfills']
-      }),
-
-      // /**
-      //  * Plugin: UglifyJsPlugin
-      //  * Description: Minimize all JavaScript output of chunks.
-      //  * Loaders are switched into minimizing mode.
-      //  *
-      //  * See: https://webpack.github.io/docs/list-of-plugins.html#uglifyjsplugin
-      //  */
-      // new uglifyJsPlugin({
-      //   uglifyOptions: {
-      //     ecma: 6
-      //   }
-      // }),
-
-      // fix Angular
-      new normalModuleReplacementPlugin(
-        /facade([\\\/])async/,
-        root(`node_modules/@angular/core/src/facade/async.js`)
-      ),
-      new normalModuleReplacementPlugin(
-        /facade([\\\/])collection/,
-        root(`node_modules/@angular/core/src/facade/collection.js`)
-      ),
-      new normalModuleReplacementPlugin(
-        /facade([\\\/])errors/,
-        root(`node_modules/@angular/core/src/facade/errors.js`)
-      ),
-      new normalModuleReplacementPlugin(
-        /facade([\\\/])lang/,
-        root(`node_modules/@angular/core/src/facade/lang.js`)
-      ),
-      new normalModuleReplacementPlugin(
-        /facade([\\\/])math/,
-        root(`node_modules/@angular/core/src/facade/math.js`)
-      ),
-
       /**
        * Plugin LoaderOptionsPlugin (experimental)
        *
@@ -177,30 +149,30 @@ const browserConfig = function(root) {
   };
 };
 
-// const serverConfig = function() {
-//   return {
-//     /**
-//      * Add additional plugins to the compiler.
-//      *
-//      * See: http://webpack.github.io/docs/configuration.html#plugins
-//      */
-//     plugins: [
-//       /**
-//        * Plugin: UglifyJsPlugin
-//        * Description: Minimize all JavaScript output of chunks.
-//        * Loaders are switched into minimizing mode.
-//        *
-//        * See: https://webpack.github.io/docs/list-of-plugins.html#uglifyjsplugin
-//        */
-//       new uglifyJsPlugin({
-//         uglifyOptions: {
-//           ecma: 6,
-//           mangle: false
-//         }
-//       })
-//     ]
-//   };
-// };
+const serverConfig = function(settings) {
+  return {
+    /**
+     * Options affecting the development experience versus performance of the compilation
+     *
+     * See: https://webpack.js.org/plugins/no-emit-on-errors-plugin/
+     * See: https://webpack.js.org/plugins/uglifyjs-webpack-plugin/
+     */
+    optimization: {
+      minimizer: !!settings.minimize
+        ? [
+          new uglifyJsPlugin({
+            uglifyOptions: {
+              ecma: 6,
+              compress: false,
+              mangle: false,
+              comments: false
+            }
+          })
+        ]
+        : undefined
+    }
+  };
+};
 
 /**
  * Webpack configuration
@@ -211,6 +183,5 @@ module.exports = function(options, root, settings) {
   return webpackMerge(commonConfig({
     env: ENV,
     platform: options.platform
-  // }, root, settings), defaultConfig(), options.platform === 'server' ? serverConfig : browserConfig(root));
-  }, root, settings), defaultConfig(), options.platform === 'server' ? {} : browserConfig(root));
+  }, root, settings), defaultConfig(settings), options.platform === 'server' ? serverConfig(settings) : browserConfig(settings));
 };

@@ -5,9 +5,10 @@ const webpackMerge = require('webpack-merge');
 
 const definePlugin = require('webpack/lib/DefinePlugin'),
   checkerPlugin = require('awesome-typescript-loader').CheckerPlugin,
+  contextReplacementPlugin = require('webpack/lib/ContextReplacementPlugin'),
   angularCompilerPlugin = require('@ngtools/webpack').AngularCompilerPlugin,
   loaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin'),
-  // assetsPlugin = require('assets-webpack-plugin'),
+  assetsPlugin = require('assets-webpack-plugin'),
   htmlWebpackPlugin = require('html-webpack-plugin'),
   extractTextPlugin = require('extract-text-webpack-plugin'),
   scriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
@@ -77,10 +78,7 @@ const defaultConfig = function (options, root, settings) {
        */
       // NOTE: when adding more properties make sure you include them in custom-typings.d.ts
       new definePlugin({
-        'ENV': JSON.stringify(options.env),
         'process.env': {
-          'ENV': JSON.stringify(options.env),
-          'NODE_ENV': JSON.stringify(options.env),
           'HOST': JSON.stringify(settings.host),
           'PORT': JSON.stringify(PORT)
         }
@@ -192,15 +190,6 @@ const serverConfig = function (root, settings) {
           loader: '@ngtools/webpack',
           exclude: [/\.(spec|e2e)\.ts$/]
         },
-        /**
-         * json-loader for *.json
-         *
-         * See: https://github.com/webpack/json-loader
-         */
-        {
-          test: /\.json$/,
-          use: 'json-loader'
-        },
 
         /**
          * to-string-loader, css-loader and sass-loader for *.scss
@@ -241,6 +230,21 @@ const serverConfig = function (root, settings) {
      * See: http://webpack.github.io/docs/configuration.html#plugins
      */
     plugins: [
+      /**
+       * Plugin: ContextReplacementPlugin
+       * Description: Provides context to Express (avoids `the request of a dependency is an expression` message)
+       *
+       * See: https://webpack.github.io/docs/list-of-plugins.html#contextreplacementplugin
+       * See: https://github.com/angular/angular/issues/11580
+       */
+      new contextReplacementPlugin(/express([\\\/])lib/, root(settings.paths.src.root)),
+
+      /**
+       * Plugin: AngularCompilerPlugin
+       * Description: Webpack 4.0 plugin that AoT compiles your Angular components and modules.
+       *
+       * See: https://github.com/angular/devkit
+       */
       new angularCompilerPlugin({
         tsConfigPath: './tsconfig.json',
         entryModule: root(`${settings.paths.src.server.app}/app.server.module#AppServerModule`),
@@ -311,16 +315,6 @@ const browserConfig = function (options, root, settings) {
               'angular2-template-loader'
             ],
           exclude: [/\.(spec|e2e)\.ts$/]
-        },
-
-        /**
-         * json-loader for *.json
-         *
-         * See: https://github.com/webpack/json-loader
-         */
-        {
-          test: /\.json$/,
-          use: 'json-loader'
         },
 
         /**
@@ -431,11 +425,11 @@ const browserConfig = function (options, root, settings) {
        *
        * See: https://github.com/kossnocorp/assets-webpack-plugin
        */
-      // new assetsPlugin({
-      //     path: root(settings.paths.public.assets.root),
-      //     filename: 'webpack-assets.json',
-      //     prettyPrint: true
-      // }),
+      new assetsPlugin({
+          path: root(settings.paths.public.assets.root),
+          filename: 'webpack-assets.json',
+          prettyPrint: true
+      }),
 
       /**
        * Plugin: HtmlWebpackPlugin
@@ -447,7 +441,10 @@ const browserConfig = function (options, root, settings) {
        */
       new htmlWebpackPlugin({
         template: root(`${settings.paths.src.client.root}/index.html`),
-        chunksSortMode: 'dependency'
+        chunks: isProd
+          ? ['polyfills', 'app']
+          : ['polyfills', 'vendor', 'app'],
+        chunksSortMode: 'manual',
       }),
 
       /**

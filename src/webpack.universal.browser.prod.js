@@ -20,6 +20,12 @@ module.exports = function(root, settings) {
      * See: http://webpack.github.io/docs/configuration.html#plugins
      */
     plugins: [
+      /**
+       * Plugin: AngularCompilerPlugin
+       * Description: Webpack 4.0 plugin that AoT compiles your Angular components and modules.
+       *
+       * See: https://github.com/angular/devkit
+       */
       new angularCompilerPlugin({
         tsConfigPath: './tsconfig.json',
         entryModule: root(`${settings.paths.src.client.app.root}/app.browser.module#AppBrowserModule`)
