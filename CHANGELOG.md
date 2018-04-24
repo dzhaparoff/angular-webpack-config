@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="6.0.1"></a>
+## 6.0.1 (2018-04-24)
+
+
+### Bug Fixes
+
+* **awc:** update config to suppress build-time warnings ([#46](https://github.com/ng-seed/angular-webpack-config/issues/46)) ([5072b17](https://github.com/ng-seed/angular-webpack-config/commit/5072b17))
+
+
+
 <a name="6.0.0"></a>
 # 6.0.0 (2018-04-17)
 
