@@ -77,26 +77,6 @@ To use this [Webpack] **configuration preset**, you should first have a **`build
       "DEV": "cheap-module-source-map",
       "PROD": "source-map",
       "TEST": "inline-source-map"
-    },
-    "bundles": { // here we specify our bundles for  DLL plugin
-      "polyfills": [
-        "core-js",
-        {
-          "name": "zone.js",
-          "path": "zone.js/dist/zone.js"
-        },
-        {
-          "name": "zone.js",
-          "path": "zone.js/dist/long-stack-trace-zone.js"
-        }
-      ],
-      "server": [
-        "express",
-        "debug",
-        "compression",
-        "morgan",
-        "body-parser"
-      ]
     }
   }
 }
