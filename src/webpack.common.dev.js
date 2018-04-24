@@ -5,7 +5,8 @@ const commonConfig = require('./webpack.common'),
   webpackMerge = require('webpack-merge');
 
 const hardSourceWebpackPlugin = require('hard-source-webpack-plugin'),
-  loaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
+  loaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin'),
+  contextReplacementPlugin = require('webpack/lib/ContextReplacementPlugin');
 
 const ENV = process.env.ENV = process.env.NODE_ENV = 'development';
 
@@ -47,7 +48,7 @@ const defaultConfig = function(settings) {
   };
 };
 
-const browserConfig = function(root) {
+const browserConfig = function(root, settings) {
   return {
     /**
      * Options affecting the output of the compilation.
@@ -115,7 +116,16 @@ const browserConfig = function(root) {
         options: {
           context: root()
         }
-      })
+      }),
+
+      /**
+       * Plugin: ContextReplacementPlugin
+       * Description: Provides context to Angular (avoids `the request of a dependency is an expression` message)
+       *
+       * See: https://webpack.github.io/docs/list-of-plugins.html#contextreplacementplugin
+       * See: https://github.com/angular/angular/issues/11580
+       */
+      new contextReplacementPlugin(/angular(\\|\/)core(\\|\/)/, root(settings.paths.src.root))
     ]
   };
 };

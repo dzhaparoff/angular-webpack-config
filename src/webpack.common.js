@@ -235,7 +235,6 @@ const serverConfig = function (root, settings) {
        * Description: Provides context to Express (avoids `the request of a dependency is an expression` message)
        *
        * See: https://webpack.github.io/docs/list-of-plugins.html#contextreplacementplugin
-       * See: https://github.com/angular/angular/issues/11580
        */
       new contextReplacementPlugin(/express([\\\/])lib/, root(settings.paths.src.root)),
 
@@ -426,9 +425,9 @@ const browserConfig = function (options, root, settings) {
        * See: https://github.com/kossnocorp/assets-webpack-plugin
        */
       new assetsPlugin({
-          path: root(settings.paths.public.assets.root),
-          filename: 'webpack-assets.json',
-          prettyPrint: true
+        path: root(settings.paths.public.assets.root),
+        filename: 'webpack-assets.json',
+        prettyPrint: true
       }),
 
       /**
