@@ -1,6 +1,6 @@
 {
   "name": "angular-webpack-config",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "description": "Shared Webpack config for Angular SPA/Universal development (w/Dll Bundles, Hard Source plugins)",
   "repository": {
     "type": "git",
