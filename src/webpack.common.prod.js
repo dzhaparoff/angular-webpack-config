@@ -108,7 +108,7 @@ const browserConfig = function(settings) {
           new uglifyJsPlugin({
             parallel: true,
             uglifyOptions: {
-              ecma: 6
+              ecma: 5
             }
           }),
           new optimizeCSSAssetsPlugin({})
