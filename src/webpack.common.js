@@ -10,7 +10,7 @@ const definePlugin = require('webpack/lib/DefinePlugin'),
   loaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin'),
   assetsPlugin = require('assets-webpack-plugin'),
   htmlWebpackPlugin = require('html-webpack-plugin'),
-  extractTextPlugin = require('extract-text-webpack-plugin'),
+  miniCssExtractPlugin = require('mini-css-extract-plugin'),
   scriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
 
 const defaultConfig = function (options, root, settings) {
@@ -331,10 +331,13 @@ const browserConfig = function (options, root, settings) {
             root('node_modules')
           ],
           use: isProd
-            ? extractTextPlugin.extract({
-              fallback: 'style-loader',
-              use: `css-loader?minimize!postcss-loader!sass-loader!stylefmt-loader?config=${settings.paths.tools.config}/stylelint.config.js`
-            })
+            ? [
+              miniCssExtractPlugin.loader,
+              'css-loader?minimize',
+              'postcss-loader',
+              'sass-loader?minimize',
+              `stylefmt-loader?config=${settings.paths.tools.config}/stylelint.config.js`
+            ]
             // TODO: temporarily disabled for sourcemaps interference
             // : ['style-loader','css-loader?sourceMap','sass-loader?sourceMap'],
             : ['style-loader', 'css-loader', 'sass-loader']
@@ -452,7 +455,11 @@ const browserConfig = function (options, root, settings) {
        *
        * See: https://github.com/webpack/extract-text-webpack-plugin
        */
-      new extractTextPlugin(`[name]${isProd ? '.[chunkhash]' : ''}.style.css`),
+      // new extractTextPlugin(`[name]${isProd ? '.[chunkhash]' : ''}.style.css`),
+      new miniCssExtractPlugin({
+        filename: `[name]${isProd ? '.[contenthash]' : ''}.style.css`,
+        chunkFilename: `[id]${isProd ? '.[contenthash]' : ''}.style.css`
+      }),
 
       /**
        * Plugin: ScriptExtHtmlWebpackPlugin
@@ -484,5 +491,6 @@ const browserConfig = function (options, root, settings) {
  * See: http://webpack.github.io/docs/configuration.html#cli
  */
 module.exports = function (options, root, settings) {
-  return webpackMerge(defaultConfig(options, root, settings), options.platform === 'server' ? serverConfig(root, settings) : browserConfig(options, root, settings));
+  return webpackMerge(defaultConfig(options, root, settings), options.platform === 'server' ?
+    serverConfig(root, settings) : browserConfig(options, root, settings));
 };

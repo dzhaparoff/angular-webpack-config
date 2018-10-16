@@ -5,6 +5,7 @@ const commonConfig = require('./webpack.common'),
   webpackMerge = require('webpack-merge');
 
 const optimizeJsPlugin = require('optimize-js-plugin'),
+  optimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin'),
   loaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin'),
   uglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
@@ -105,10 +106,12 @@ const browserConfig = function(settings) {
       minimizer: !!settings.minimize
         ? [
           new uglifyJsPlugin({
+            parallel: true,
             uglifyOptions: {
               ecma: 5
             }
-          })
+          }),
+          new optimizeCSSAssetsPlugin({})
         ]
         : undefined
     },
