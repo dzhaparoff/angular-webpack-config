@@ -106,7 +106,7 @@ const browserConfig = function(settings) {
         ? [
           new uglifyJsPlugin({
             uglifyOptions: {
-              ecma: 6
+              ecma: 5
             }
           })
         ]
